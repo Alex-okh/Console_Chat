@@ -35,6 +35,19 @@ public class ClientHandler {
               send("/exitok");
               break;
             }
+            if (msg.startsWith("/w")) {
+              String[] words = msg.split(" ", 3);
+              if (words.length == 3) {
+                ClientHandler target = server.findClientByName(words[1]);
+                if (target != null) {
+                  target.send("Private from " + userName + " : " + words[2]);
+                } else {
+                  this.send("Name " + words[1] + " not found. Nothing sent.");
+                }
+              } else {
+                this.send("No message found. Nothing sent.");
+              }
+            }
 
           } else {
             System.out.println(msg);
