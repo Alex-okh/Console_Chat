@@ -11,6 +11,7 @@ public class ClientMain {
     while (retrycount > 0) {
       try {
         new Client();
+        break;
       } catch (IOException e) {
         System.out.println("Could not connect to server. Reason: " + e.getMessage());
         retrycount--;
