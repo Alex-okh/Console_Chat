@@ -11,6 +11,7 @@ public class ClientHandler {
   private DataInputStream inputStream;
   private DataOutputStream outputStream;
   private String userName;
+  private UserRights rights;
   private boolean authenticated;
 
   public ClientHandler(Socket socket, Server server) throws IOException {
@@ -41,7 +42,7 @@ public class ClientHandler {
             if (msg.startsWith("/auth")) {
               String[] element = msg.split(" ");
               if (element.length != 3) {
-                System.out.println("/auth failed. Wrong format.");
+                send("/auth failed. Wrong format.");
                 continue;
               }
               if (server.getAuthProvider().authenticate(this, element[1], element[2])) {
@@ -53,7 +54,7 @@ public class ClientHandler {
             if (msg.startsWith("/reg")) {
               String[] element = msg.split(" ");
               if (element.length != 4) {
-                System.out.println("/reg failed. Wrong format.");
+                send("/reg failed. Wrong format.");
                 continue;
               }
               if (server.getAuthProvider().register(this, element[1], element[2], element[3])) {
@@ -88,13 +89,37 @@ public class ClientHandler {
               }
             }
 
+            if (msg.startsWith("/kick")) {
+              if (rights == UserRights.ADMIN || rights == UserRights.OWNER) {
+                String[] words = msg.split(" ", 2);
+                if (words.length == 2) {
+                  ClientHandler target = server.findClientByName(words[1]);
+                  if (target == null) {
+                    this.send("Name " + words[1] + " not found. Nothing done.");
+                  } else if (target.getRights() == UserRights.OWNER) {
+                    this.send("Watch out! Owner cannot be kicked!");
+                  } else {
+                    target.send("You are kicked by: " + userName);
+                    target.disconnect();
+
+                    target.authenticated = false;
+
+                  }
+                }
+              } else {
+                this.send("You are not allowed to kick users.");
+              }
+
+            }
+
           } else {
             System.out.println(msg);
             server.broadcast(userName + ": " + msg);
           }
         }
       } catch (IOException e) {
-        e.printStackTrace();
+        System.out.println(e.getMessage());
+        ;
       } finally {
         disconnect();
       }
@@ -141,5 +166,13 @@ public class ClientHandler {
 
   public void setUserName(String userName) {
     this.userName = userName;
+  }
+
+  public UserRights getRights() {
+    return rights;
+  }
+
+  public void setRights(UserRights rights) {
+    this.rights = rights;
   }
 }

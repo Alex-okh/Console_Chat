@@ -12,8 +12,8 @@ public class InMemoryAuthProvider implements AuthenticateProvider {
     this.server = server;
     users = new CopyOnWriteArrayList<>();
     users.add(new User("john", "password", "john"));
-    users.add(new User("jane", "password", "jane"));
-    users.add(new User("joe", "password", "joe"));
+    users.add(new User("jane", "password", "jane", UserRights.ADMIN));
+    users.add(new User("joe", "password", "joe", UserRights.OWNER));
   }
 
   @Override
@@ -25,6 +25,15 @@ public class InMemoryAuthProvider implements AuthenticateProvider {
     for (User user : users) {
       if (user.login.equals(login) && user.password.equals(password)) {
         return user.userName;
+      }
+    }
+    return null;
+  }
+
+  private UserRights getUserRightsbyLogin(String login) {
+    for (User user : users) {
+      if (user.login.equals(login)) {
+        return user.rights;
       }
     }
     return null;
@@ -43,6 +52,7 @@ public class InMemoryAuthProvider implements AuthenticateProvider {
     }
 
     client.setUserName(foundUserName);
+    client.setRights(getUserRightsbyLogin(login));
     server.subscribe(client);
     client.send("Authentification OK. Username: " + foundUserName);
 
@@ -93,11 +103,20 @@ public class InMemoryAuthProvider implements AuthenticateProvider {
     private String login;
     private String password;
     private String userName;
+    private UserRights rights;
 
     public User(String login, String password, String userName) {
       this.login = login;
       this.password = password;
       this.userName = userName;
+      rights = UserRights.USER;
+    }
+
+    public User(String login, String password, String userName, UserRights rights) {
+      this.login = login;
+      this.password = password;
+      this.userName = userName;
+      this.rights = rights;
     }
   }
 }
