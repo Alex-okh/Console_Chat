@@ -40,7 +40,6 @@ public class Client {
     }).start();
     while (true) {
       String msg = sc.nextLine();
-      System.out.print("\b".repeat(msg.length()));
       outputStream.writeUTF(msg);
       if (msg.equalsIgnoreCase("/exit")) {
         break;

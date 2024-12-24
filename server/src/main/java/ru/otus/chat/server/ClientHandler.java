@@ -11,23 +11,62 @@ public class ClientHandler {
   private DataInputStream inputStream;
   private DataOutputStream outputStream;
   private String userName;
-  private static int userCount = 0;
+  private boolean authenticated;
 
   public ClientHandler(Socket socket, Server server) throws IOException {
     this.socket = socket;
     this.server = server;
     inputStream = new DataInputStream(socket.getInputStream());
     outputStream = new DataOutputStream(socket.getOutputStream());
-    userCount++;
-    userName = "User" + userCount;
+    authenticated = false;
 
 
     new Thread(() -> {
       try {
         System.out.println("Client connected at port:  " + socket.getLocalPort());
         System.out.println("Client port :" + socket.getPort());
-
+        //цикл аутентификации
         while (true) {
+          send("""
+                  Please authenticate or register to start messaging.
+                  Use /auth login password to authenticate.
+                  Use /reg login password username to register.""");
+          String msg = inputStream.readUTF();
+          if (msg.startsWith("/")) {
+            if (msg.equalsIgnoreCase("/exit")) {
+              System.out.println("Client exited");
+              send("/exitok");
+              break;
+            }
+            if (msg.startsWith("/auth")) {
+              String[] element = msg.split(" ");
+              if (element.length != 3) {
+                System.out.println("/auth failed. Wrong format.");
+                continue;
+              }
+              if (server.getAuthProvider().authenticate(this, element[1], element[2])) {
+                authenticated = true;
+                break;
+              }
+            }
+
+            if (msg.startsWith("/reg")) {
+              String[] element = msg.split(" ");
+              if (element.length != 4) {
+                System.out.println("/reg failed. Wrong format.");
+                continue;
+              }
+              if (server.getAuthProvider().register(this, element[1], element[2], element[3])) {
+                authenticated = true;
+                break;
+              }
+            }
+          }
+        }
+
+
+        //цикл работы
+        while (authenticated) {
           String msg = inputStream.readUTF();
           if (msg.startsWith("/")) {
             if (msg.equalsIgnoreCase("/exit")) {
@@ -98,5 +137,9 @@ public class ClientHandler {
 
   public String getUserName() {
     return userName;
+  }
+
+  public void setUserName(String userName) {
+    this.userName = userName;
   }
 }
