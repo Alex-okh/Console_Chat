@@ -11,6 +11,7 @@ public class Client {
   private DataInputStream inputStream;
   private DataOutputStream outputStream;
   private Scanner sc;
+  private boolean stop = false;
 
   public Client() throws IOException {
     socket = new Socket("localhost", 8189);
@@ -21,8 +22,11 @@ public class Client {
     new Thread(() -> {
       System.out.println("Connected.");
       try {
-        while (true) {
+        while (!stop) {
           String msg = inputStream.readUTF();
+          if (msg.startsWith("You are kicked")) {
+            stop = true;
+          }
           if (msg.startsWith("/")) {
             if (msg.equalsIgnoreCase("/exitok")) {
               break;
@@ -33,13 +37,17 @@ public class Client {
         }
 
       } catch (IOException e) {
-        e.printStackTrace();
+        System.out.println(e.getMessage());
       } finally {
         disconnect();
       }
     }).start();
+
     while (true) {
       String msg = sc.nextLine();
+      if (stop) {
+        break;
+      }
       outputStream.writeUTF(msg);
       if (msg.equalsIgnoreCase("/exit")) {
         break;
@@ -48,6 +56,7 @@ public class Client {
   }
 
   public void disconnect() {
+    stop = true;
     try {
       if (inputStream != null) {
         inputStream.close();
