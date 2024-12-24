@@ -35,8 +35,7 @@ public class Server {
   }
 
   public void unsubscribe(ClientHandler client) {
-    clients.remove(client);
-    if (client.getUserName() != null) {
+    if (clients.remove(client) && client.getUserName() != null) {
       broadcast(client.getUserName() + " has left chat...");
     }
   }

@@ -119,7 +119,7 @@ public class ClientHandler {
         }
       } catch (IOException e) {
         System.out.println(e.getMessage());
-        ;
+
       } finally {
         disconnect();
       }
